@@ -68,6 +68,10 @@ $(function(){
                 loadList(1); // 显示正在播放列表
             break;
             
+            case "history": // 历史记录
+                loadList(2); // 显示历史记录列表
+            break;
+            
             case "sheet":   // 播放列表
                 dataBox("sheet");    // 在主界面显示出音乐专辑
             break;
@@ -274,6 +278,7 @@ $(function(){
 
 // 展现系统列表中任意首歌的歌曲信息
 function musicInfo(list, index) {
+    
     var music = musicList[list].item[index];
     var tempStr = '<span class="info-title">歌名：</span>' + music.name + 
     '<br><span class="info-title">歌手：</span>' + music.artist + 
@@ -282,11 +287,20 @@ function musicInfo(list, index) {
     if(list == rem.playlist && index == rem.playid) {   // 当前正在播放这首歌，那么还可以顺便获取一下时长。。
         tempStr += '<br><span class="info-title">时长：</span>' + formatTime(rem.audio[0].duration);
     }
-    
-    tempStr += '<br><span class="info-title">操作：</span>' + 
-    '<span class="info-btn" onclick="thisDownload(this)" data-list="' + list + '" data-index="' + index + '">下载</span>' + 
-    '<span style="margin-left: 10px" class="info-btn" onclick="thisShare(this)" data-list="' + list + '" data-index="' + index + '">外链</span>';
-    
+        console.log(rem.dislist);//当前列表ID
+    if(rem.dislist==2){//如果当前在历史列表才有删除功能
+    tempStr += '<br><span class="info-title">操作：</span><br>' + 
+    '<span class="info-btn" onclick="thisRepeat(this)" data-list="' + list + '" data-index="' + index + '">循环播放这首歌</span><br>'+
+    '<span class="info-btn" onclick="thisRemove(this)" data-list="' + list + '" data-index="' + index + '">从列表中删除</span><br>'+
+    '<span class="info-btn" onclick="thisDownload(this)" data-list="' + list + '" data-index="' + index + '">下载</span><br>' + 
+    '<span class="info-btn" onclick="thisShare(this)" data-list="' + list + '" data-index="' + index + '">外链</span><br>';
+    }
+    else{
+     tempStr += '<br><span class="info-title">操作：</span><br>' + 
+    '<span class="info-btn" onclick="thisRepeat(this)" data-list="' + list + '" data-index="' + index + '">循环播放这首歌</span><br>'+
+    '<span class="info-btn" onclick="thisDownload(this)" data-list="' + list + '" data-index="' + index + '">下载</span><br>' + 
+    '<span class="info-btn" onclick="thisShare(this)" data-list="' + list + '" data-index="' + index + '">外链</span><br>';
+    }
     layer.open({
         type: 0,
         shade: false,
@@ -358,6 +372,62 @@ function searchSubmit() {
     ajaxSearch();   // 加载搜索结果
     return false;
 }
+//循环播放这首歌
+function thisRepeat(obj) {
+    pause();
+    ajaxUrl(musicList[$(obj).data("list")].item[$(obj).data("index")], ajaxRepeat);
+}
+//从列表中删除
+function thisRemove(obj) {
+   //console.log(musicList[$(obj).data("list")].item[$(obj).data("index")]["id"]);
+   res_dict=[]
+   if (window.localStorage) {
+        if (rem.dislist==1){
+            temp_json=JSON.parse(localStorage.getItem("mkPlayer2_playing"))
+            
+            Object.keys(temp_json).forEach(function(key){
+            //console.log(temp_json[key])
+            if (temp_json[key]["id"] != musicList[$(obj).data("list")].item[$(obj).data("index")]["id"]) {
+            //delete temp_json[key];
+            res_dict.push(temp_json[key])
+            }
+            });
+        
+            res_json = JSON.stringify(res_dict);
+            console.log(res_json)
+            //playerSavedata('playing', '');
+            //playerSavedata('his', '');
+            //localStorage.setItem("mkPlayer2_his", res_json)
+            localStorage.setItem("mkPlayer2_playing", res_json)
+        }
+        else{
+            temp_json=JSON.parse(localStorage.getItem("mkPlayer2_his"))
+            Object.keys(temp_json).forEach(function(key){
+            //console.log(temp_json[key])
+            if (temp_json[key]["id"] != musicList[$(obj).data("list")].item[$(obj).data("index")]["id"]) {
+            //delete temp_json[key];
+            res_dict.push(temp_json[key])
+            }
+            });
+        
+            res_json = JSON.stringify(res_dict);
+            console.log(res_json)
+            //playerSavedata('playing', '');
+            //playerSavedata('his', '');
+            
+            localStorage.setItem("mkPlayer2_his", res_json)
+            
+        }
+
+        pause();//最好还是暂停下
+        // 刷新列表显示
+        //clearSheet();
+        //initList();
+        //refreshList(); 
+        location.reload();
+    }
+    return;
+}
 
 // 下载正在播放的这首歌
 function thisDownload(obj) {
@@ -421,7 +491,22 @@ function ajaxShare(music) {
         ,content: tmpHtml
     });
 }
-
+//重复播放当前音乐的页面
+function ajaxRepeat(music) {
+    if(music.url == 'err' || music.url == "" || music.url == null) {
+        //layer.msg('歌曲加载失败);
+        return;
+    }
+    
+    var tmpHtml = '<p>' + music.artist + ' - ' + music.name + ' </p><br>' + 
+    '<audio src="'+music.url+'" autoplay="autoplay" controls loop="loop"></audio>' + 
+    '<p class="share-tips"></p>';
+    
+    layer.open({
+        title: '循环播放'
+        ,content: tmpHtml
+    });
+}
 // 改变右侧封面图像
 // 新的图像地址
 function changeCover(music) {
@@ -772,7 +857,7 @@ function initList() {
             var tmp_item = playerReaddata('playing');
             if(tmp_item) {  // 读取到了正在播放列表
                 musicList[1].item = tmp_item;
-                mkPlayer.defaultlist = 1;   // 默认显示正在播放列表
+                mkPlayer.defaultlist = 2;   // 默认显示播放列表
             }
             
         } else if(i == 2) { // 历史记录列表
@@ -804,7 +889,7 @@ function initList() {
     }
     
     // 首页显示默认列表
-    if(mkPlayer.defaultlist >= musicList.length) mkPlayer.defaultlist = 1;  // 超出范围，显示正在播放列表
+    if(mkPlayer.defaultlist >= musicList.length) mkPlayer.defaultlist = 2;  // 超出范围，显示正在播放列表
     
     if(musicList[mkPlayer.defaultlist].isloading !== true)  loadList(mkPlayer.defaultlist);
     
