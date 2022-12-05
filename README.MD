@@ -1,10 +1,14 @@
-MKOnlineMusicPlayer
+OnlineMusicPlayer
 ========
-MKOnlineMusicPlayer 是一款全屏的音乐播放器 UI 框架（为避免侵权，已移除所有后端功能）。
+项目说明
 
-前端界面参照 QQ 音乐网页版进行布局，同时采用了流行的响应式设计，无论是在PC端还是在手机端，均能给您带来原生 app 般的使用体验。
+原始项目：MKOnlinePlayer
+作者：mengkun(https://mkblog.cn)
+Github：https://github.com/mengkunsoft/MKOnlineMusicPlayer
 
-> 本项目仅为学习前端的练手之作，请勿用作商业用途，请勿利用本项目搭建盗版音乐网站，否则后果自负！
+原项目已经停止开发，此为二次开发的版本。
+当前的改动：前端添加了单曲循环，播放列表删除的功能；后端API结合fetch项目实现匿名稳定传输
+
 
 ### 界面欣赏
 -----
